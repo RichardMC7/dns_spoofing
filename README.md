@@ -1,11 +1,6 @@
-Aquí tienes tu **README.md corregido, mejor estructurado y con formato profesional** listo para entrega:
-
----
-
-````markdown
 # DNS Spoofing Lab
 
-## 🔹 Ejecución del Script
+## Ejecución del Script
 
 ```bash
 sudo python3 dnsspoofing.py -i (adaptador_de_red) -d itla.edu.do -r (ip_maquina_atacante)
@@ -13,7 +8,7 @@ sudo python3 dnsspoofing.py -i (adaptador_de_red) -d itla.edu.do -r (ip_maquina_
 
 ---
 
-## 🎯 Objetivo del Script
+## Objetivo del Script
 
 El objetivo de este script es permitir la realización de un ataque de **DNS Spoofing**, el cual consiste en suplantar la respuesta del servidor DNS.
 
@@ -26,7 +21,7 @@ Este ataque puede provocar que:
 
 ---
 
-## 🖥️ Topología Utilizada
+## Topología Utilizada
 
 ### Dispositivos:
 
@@ -60,9 +55,9 @@ Este ataque puede provocar que:
 
 ---
 
-## 📦 Requisitos para Utilizar la Herramienta
+## Requisitos para Utilizar la Herramienta
 
-### 1️⃣ Instalar Python 3
+### 1️Instalar Python 3
 
 ```bash
 sudo apt install python3 -y
@@ -70,7 +65,7 @@ sudo apt install python3 -y
 
 ---
 
-### 2️⃣ Instalar Scapy
+### Instalar Scapy
 
 ```bash
 sudo apt install python3-pip -y
@@ -79,9 +74,9 @@ pip3 install scapy
 
 ---
 
-## 🛡️ Medidas de Mitigación
+## Medidas de Mitigación
 
-### 🔹 1. Bloquear uso de DNS externos
+### 1. Bloquear uso de DNS externos
 
 ```bash
 access-list 100 deny udp any any eq 53
@@ -93,7 +88,7 @@ interface g0/0
 
 ---
 
-### 🔹 2. Permitir únicamente DNS interno
+### 2. Permitir únicamente DNS interno
 
 Ejemplo:
 
@@ -108,7 +103,7 @@ interface g0/0
 
 ---
 
-### 🔹 3. Implementar uRPF (Unicast Reverse Path Forwarding)
+### 3. Implementar uRPF (Unicast Reverse Path Forwarding)
 
 ```bash
 interface g0/0
@@ -119,7 +114,7 @@ Esto ayuda a prevenir paquetes con direcciones IP falsificadas.
 
 ---
 
-### 🔹 4. Configurar Dynamic ARP Inspection (DAI)
+### 4. Configurar Dynamic ARP Inspection (DAI)
 
 ```bash
 ip arp inspection vlan 10
@@ -129,7 +124,7 @@ Esto permite que el router/switch valide las respuestas ARP usando la tabla gene
 
 ---
 
-## ⚠️ Nota Importante
+## Nota Importante
 
 El script está configurado específicamente para el dominio:
 
@@ -139,15 +134,4 @@ itla.edu.do
 
 Este laboratorio debe utilizarse únicamente en un entorno controlado con fines educativos.
 
-```
-
----
-
-Si quieres, puedo:
-
-- 🔥 Mejorarlo con formato más formal tipo informe universitario
-- 📘 Agregar sección de conclusiones
-- 🧪 Agregar sección de pruebas y evidencias
-- 🛡️ Hacer una versión más técnica orientada a seguridad
-- 📄 Dejarlo listo para entregar en PDF
 ```
